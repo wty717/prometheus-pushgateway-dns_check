@@ -1,0 +1,82 @@
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"os"
+	//        "github.com/robfig/cron"
+	//        "log"
+)
+
+var localip string
+
+func dnsCheck(name string) bool {
+
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	for _, address := range addrs {
+		// 检查ip地址判断是否回环地址
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				//                              fmt.Println(ipnet.IP.String())
+				localip = ipnet.IP.To4().String()
+				fmt.Println(localip)
+			}
+		}
+	}
+
+	//body := bytes.NewBufferString("dns 1\n")
+	//resp, err := http.Post("http://10.193.0.41:9091/metrics/job/dns_new/instance/"+localip , "", body)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//data, _ := ioutil.ReadAll(resp.Body)
+	//fmt.Println(string(data))
+
+	ips, err := net.LookupHost(name)
+	//if err != nil {
+	//	return false
+	//}
+	if len(ips) == 0 {
+		body := bytes.NewBufferString("dns 0\n")
+		resp, err := http.Post("http://10.193.0.41:9091/metrics/job/dns_check/instance/"+localip, "", body)
+		if err != nil {
+			fmt.Print(err)
+		}
+		data, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println(string(data))
+		fmt.Println(resp)
+		return false
+	} else {
+		fmt.Println(ips)
+		body := bytes.NewBufferString("dns 1\n")
+		resp, err := http.Post("http://10.193.0.41:9091/metrics/job/dns_check/instance/"+localip, "", body)
+		if err != nil {
+			fmt.Print(err)
+		}
+		data, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println(string(data))
+		fmt.Println(resp)
+		return true
+	}
+	return true
+}
+
+func main() {
+	//        i := 0
+	//        c := cron.New()
+	//        spec_time := "* */5 * * *  ?"
+	//        c.AddFunc(spec_time, func() {
+	//             i++
+	fmt.Println(dnsCheck("cmdb.iqiyi.com"))
+	//	     log.Println(dnsCheck("cmdb.iqiyi.com") , i)
+	//                })
+	//        c.Start()
+	//        select{}
+}
