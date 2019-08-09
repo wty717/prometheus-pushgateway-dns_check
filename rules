@@ -1,0 +1,12 @@
+groups:
+- name: dns-resolv-alarm
+  rules:
+ 
+  - alert: dns_resolv_error
+    expr: dns{job="pushgateway"}  == 0
+    for: 1m
+    labels:
+      team: op
+    annotations:
+      summary: "[DNS解析报警]  [{{$labels.exported_instance}}] 域名解析失败"
+      description: "[DNS解析报警]  [{{$labels.exported_instance}}] 域名解析报警"
